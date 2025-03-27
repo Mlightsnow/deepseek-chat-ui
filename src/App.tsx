@@ -16,6 +16,7 @@ interface SavedChat {
     content: string;
   }[];
   date: string;
+  systemPrompt?: string; // 添加可选的系统提示字段，兼容旧版数据
 }
 
 // 主题设置
@@ -82,10 +83,39 @@ function App() {
     }
   }, [drawerOpen]);
 
+  // 组件卸载时，恢复原始system prompt
+  useEffect(() => {
+    return () => {
+      clearTempSystemPrompt();
+    };
+  }, []);
+
   // 处理选择聊天记录
   const handleSelectChat = (chat: SavedChat) => {
     setCurrentChat(chat);
+    
+    // 如果保存的对话中有system prompt，则临时恢复它
+    if (chat.systemPrompt) {
+      localStorage.setItem('tempSystemPrompt', localStorage.getItem('deepseekSystemPrompt') || '');
+      localStorage.setItem('deepseekSystemPrompt', chat.systemPrompt);
+    }
+    
     setDrawerOpen(false);
+  };
+
+  // 清除临时系统提示并恢复用户设置的系统提示
+  const clearTempSystemPrompt = () => {
+    const tempPrompt = localStorage.getItem('tempSystemPrompt');
+    if (tempPrompt !== null) {
+      localStorage.setItem('deepseekSystemPrompt', tempPrompt);
+      localStorage.removeItem('tempSystemPrompt');
+    }
+  };
+
+  // 当用户点击创建新对话时，清除临时系统提示
+  const handleNewChat = () => {
+    clearTempSystemPrompt();
+    setCurrentChat(null);
   };
 
   // 删除保存的聊天记录
@@ -127,7 +157,7 @@ function App() {
           <ChatInterface 
             apiKey={apiKey} 
             initialMessages={currentChat ? currentChat.messages : undefined}
-            onNewChat={() => setCurrentChat(null)}
+            onNewChat={handleNewChat}
           />
         </Container>
       </Box>

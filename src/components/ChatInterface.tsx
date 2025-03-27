@@ -42,6 +42,7 @@ interface SavedChat {
   name: string;
   messages: Message[];
   date: string;
+  systemPrompt: string;
 }
 
 const DEFAULT_SYSTEM_PROMPT = '你是由DeepSeek AI驱动的智能助手，请尽可能简洁、准确地回答用户问题。';
@@ -95,6 +96,44 @@ const ChatInterface = ({ apiKey, initialMessages, onNewChat }: ChatInterfaceProp
     if (messages.length > 0 && messages[0].role === 'system') {
       setMessages(prev => [{ role: 'system', content: systemPrompt }, ...prev.slice(1)]);
     }
+  }, [systemPrompt]);
+
+  // 添加一个监听系统提示变化的useEffect
+  useEffect(() => {
+    // 创建一个存储事件监听器
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'deepseekSystemPrompt' && e.newValue !== null) {
+        setSystemPrompt(e.newValue);
+      }
+    };
+
+    // 添加监听器
+    window.addEventListener('storage', handleStorageChange);
+
+    // 清理函数
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
+  // 定期检查localStorage中的系统提示是否变化
+  useEffect(() => {
+    const checkSystemPrompt = () => {
+      const storedPrompt = localStorage.getItem('deepseekSystemPrompt');
+      if (storedPrompt && storedPrompt !== systemPrompt) {
+        setSystemPrompt(storedPrompt);
+      }
+    };
+
+    // 首次检查
+    checkSystemPrompt();
+
+    // 设置定期检查
+    const intervalId = setInterval(checkSystemPrompt, 1000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
   }, [systemPrompt]);
 
   const handleSendMessage = async () => {
@@ -237,11 +276,15 @@ const ChatInterface = ({ apiKey, initialMessages, onNewChat }: ChatInterfaceProp
 
     const savedChats: SavedChat[] = JSON.parse(localStorage.getItem('deepseekSavedChats') || '[]');
     
+    // 提取当前使用的system prompt
+    const currentSystemPrompt = messages.find(m => m.role === 'system')?.content || systemPrompt;
+    
     const newChat: SavedChat = {
       id: Date.now().toString(),
       name: chatName,
       messages: messages,
-      date: new Date().toISOString()
+      date: new Date().toISOString(),
+      systemPrompt: currentSystemPrompt // 保存当前使用的system prompt
     };
     
     savedChats.push(newChat);
