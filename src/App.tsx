@@ -18,6 +18,7 @@ interface SavedChat {
   }[];
   date: string;
   systemPrompt?: string; // 添加可选的系统提示字段，兼容旧版数据
+  autoSaved?: boolean; // 是否为自动保存的对话
 }
 
 // 主题设置
@@ -230,12 +231,32 @@ function App() {
                     <DeleteIcon />
                   </IconButton>
                 }
+                sx={chat.autoSaved ? { backgroundColor: 'rgba(16, 163, 127, 0.08)' } : {}}
               >
                 <ListItemIcon>
                   <ChatIcon />
                 </ListItemIcon>
                 <ListItemText 
-                  primary={chat.name} 
+                  primary={
+                    <>
+                      {chat.name}
+                      {chat.autoSaved && (
+                        <Typography 
+                          component="span" 
+                          variant="caption" 
+                          sx={{ 
+                            ml: 1, 
+                            color: 'text.secondary',
+                            backgroundColor: 'rgba(16, 163, 127, 0.15)',
+                            padding: '2px 6px',
+                            borderRadius: '4px'
+                          }}
+                        >
+                          自动
+                        </Typography>
+                      )}
+                    </>
+                  }
                   secondary={new Date(chat.date).toLocaleString()}
                 />
               </ListItem>

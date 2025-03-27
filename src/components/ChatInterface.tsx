@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { 
   Box, 
@@ -24,7 +24,10 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import SaveIcon from '@mui/icons-material/Save';
 import SettingsIcon from '@mui/icons-material/Settings';
 import DownloadIcon from '@mui/icons-material/Download';
+import ToggleOnIcon from '@mui/icons-material/ToggleOn';
+import ToggleOffIcon from '@mui/icons-material/ToggleOff';
 import ReactMarkdown from 'react-markdown';
+import { v4 as uuidv4 } from 'uuid';
 
 interface Message {
   role: 'user' | 'assistant' | 'system';
@@ -43,6 +46,7 @@ interface SavedChat {
   messages: Message[];
   date: string;
   systemPrompt: string;
+  autoSaved?: boolean; // 是否为自动保存的对话
 }
 
 const DEFAULT_SYSTEM_PROMPT = '你是由DeepSeek AI驱动的智能助手，请尽可能简洁、准确地回答用户问题。';
@@ -66,6 +70,13 @@ const ChatInterface = ({ apiKey, initialMessages, onNewChat }: ChatInterfaceProp
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [systemPromptDialog, setSystemPromptDialog] = useState(false);
   const [tempSystemPrompt, setTempSystemPrompt] = useState(systemPrompt);
+  
+  // 自动保存相关
+  const [currentChatId, setCurrentChatId] = useState<string>(
+    localStorage.getItem('currentChatId') || uuidv4()
+  );
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState<boolean>(true);
+  const autoSaveIntervalRef = useRef<number | null>(null);
 
   // 加载初始消息
   useEffect(() => {
@@ -268,7 +279,7 @@ const ChatInterface = ({ apiKey, initialMessages, onNewChat }: ChatInterfaceProp
     setShowSaveDialog(true);
   };
 
-  // 确认保存聊天记录
+  // 确认保存聊天记录（手动保存，会取消自动保存标记）
   const confirmSaveChat = () => {
     if (!chatName.trim()) {
       return;
@@ -279,15 +290,26 @@ const ChatInterface = ({ apiKey, initialMessages, onNewChat }: ChatInterfaceProp
     // 提取当前使用的system prompt
     const currentSystemPrompt = messages.find(m => m.role === 'system')?.content || systemPrompt;
     
+    // 检查是否已有自动保存的对话
+    const existingChatIndex = savedChats.findIndex(chat => chat.id === currentChatId);
+    
     const newChat: SavedChat = {
-      id: Date.now().toString(),
+      id: currentChatId,
       name: chatName,
       messages: messages,
       date: new Date().toISOString(),
-      systemPrompt: currentSystemPrompt // 保存当前使用的system prompt
+      systemPrompt: currentSystemPrompt,
+      autoSaved: false // 手动保存的对话不标记为自动保存
     };
     
-    savedChats.push(newChat);
+    if (existingChatIndex !== -1) {
+      // 更新现有对话
+      savedChats[existingChatIndex] = newChat;
+    } else {
+      // 添加新对话
+      savedChats.push(newChat);
+    }
+    
     localStorage.setItem('deepseekSavedChats', JSON.stringify(savedChats));
     
     setChatName('');
@@ -330,6 +352,84 @@ const ChatInterface = ({ apiKey, initialMessages, onNewChat }: ChatInterfaceProp
     localStorage.setItem('deepseekSystemPrompt', tempSystemPrompt);
     setSystemPromptDialog(false);
   };
+
+  // 自动保存当前对话
+  const autoSaveChat = useCallback(() => {
+    // 如果只有系统消息或正在加载，不保存
+    if (messages.length <= 1 || isLoading || !autoSaveEnabled) return;
+    
+    const savedChats: SavedChat[] = JSON.parse(localStorage.getItem('deepseekSavedChats') || '[]');
+    const currentSystemPrompt = messages.find(m => m.role === 'system')?.content || systemPrompt;
+    
+    // 检查当前会话是否已存在
+    const existingChatIndex = savedChats.findIndex(chat => chat.id === currentChatId);
+    
+    // 提取最后一条用户消息作为自动保存的聊天名称
+    let autoName = '自动保存的对话';
+    const lastUserMessage = [...messages].reverse().find(m => m.role === 'user');
+    if (lastUserMessage) {
+      // 截取前20个字符作为名称
+      autoName = lastUserMessage.content.substring(0, 20);
+      if (lastUserMessage.content.length > 20) autoName += '...';
+    }
+    
+    const updatedChat: SavedChat = {
+      id: currentChatId,
+      name: autoName,
+      messages: messages,
+      date: new Date().toISOString(),
+      systemPrompt: currentSystemPrompt,
+      autoSaved: true
+    };
+    
+    if (existingChatIndex !== -1) {
+      // 更新现有对话
+      savedChats[existingChatIndex] = updatedChat;
+    } else {
+      // 添加新对话
+      savedChats.push(updatedChat);
+    }
+    
+    localStorage.setItem('deepseekSavedChats', JSON.stringify(savedChats));
+    localStorage.setItem('currentChatId', currentChatId);
+  }, [messages, systemPrompt, currentChatId, isLoading, autoSaveEnabled]);
+
+  // 设置自动保存定时器
+  useEffect(() => {
+    if (autoSaveEnabled) {
+      // 初始化时保存一次
+      if (messages.length > 1) {
+        autoSaveChat();
+      }
+      
+      // 设置每30秒自动保存一次
+      const intervalId = window.setInterval(autoSaveChat, 30000);
+      autoSaveIntervalRef.current = intervalId;
+      
+      return () => {
+        if (autoSaveIntervalRef.current !== null) {
+          clearInterval(autoSaveIntervalRef.current);
+        }
+      };
+    }
+  }, [autoSaveChat, autoSaveEnabled]);
+
+  // 消息变化时自动保存
+  useEffect(() => {
+    // 当消息发生变化且不是初始状态时，保存对话
+    if (messages.length > 1 && !isLoading) {
+      autoSaveChat();
+    }
+  }, [messages, autoSaveChat, isLoading]);
+
+  // 创建新对话时重置自动保存ID
+  useEffect(() => {
+    if (!initialMessages || initialMessages.length <= 1) {
+      const newId = uuidv4();
+      setCurrentChatId(newId);
+      localStorage.setItem('currentChatId', newId);
+    }
+  }, [initialMessages]);
 
   return (
     <Box sx={{ 
@@ -506,8 +606,22 @@ const ChatInterface = ({ apiKey, initialMessages, onNewChat }: ChatInterfaceProp
             <ListItemIcon>
               <SaveIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText>保存对话</ListItemText>
+            <ListItemText>手动保存对话</ListItemText>
           </MenuItem>
+          
+          <MenuItem onClick={() => {
+            setAutoSaveEnabled(!autoSaveEnabled);
+            handleMenuClose();
+          }}>
+            <ListItemIcon>
+              {autoSaveEnabled ? 
+                <ToggleOnIcon fontSize="small" color="primary" /> : 
+                <ToggleOffIcon fontSize="small" />
+              }
+            </ListItemIcon>
+            <ListItemText>{autoSaveEnabled ? '关闭自动保存' : '开启自动保存'}</ListItemText>
+          </MenuItem>
+          
           <MenuItem onClick={downloadChatAsJson}>
             <ListItemIcon>
               <DownloadIcon fontSize="small" />
