@@ -15,6 +15,7 @@ A simple chat interface for interacting with the DeepSeek API.
 - Export conversations as JSON files
 - Streaming output for real-time responses
 - Create new conversations with a single click
+- Auto-save conversations without manual intervention
 
 ## Getting Started
 
@@ -53,10 +54,12 @@ A simple chat interface for interacting with the DeepSeek API.
 
 ### Saving Conversations
 
-1. Click the save icon and select "Save Conversation".
-2. Enter a name for the conversation and click save.
-3. Saved conversations can be accessed through the history button in the top-right corner.
-4. You can also export the current conversation as a JSON file through the "Export as JSON" option.
+1. Conversations are automatically saved as you chat (auto-save feature)
+2. You can also manually save a conversation by clicking the save icon and selecting "Save Conversation"
+3. Auto-saved conversations are marked with an "auto" tag in the history sidebar
+4. You can disable auto-saving by clicking the save icon and selecting "Turn Off Auto-save"
+5. All saved conversations can be accessed through the history button in the top-right corner
+6. You can also export any conversation as a JSON file through the "Export as JSON" option
 
 ## Deployment
 
