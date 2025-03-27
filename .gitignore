@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw? 
+
+# 聊天记录文件
+deepseek-chat-*.json 
