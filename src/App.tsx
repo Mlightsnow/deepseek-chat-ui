@@ -7,6 +7,7 @@ import APIKeyModal from './components/APIKeyModal';
 import ChatIcon from '@mui/icons-material/Chat';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CloseIcon from '@mui/icons-material/Close';
+import AddIcon from '@mui/icons-material/Add';
 
 interface SavedChat {
   id: string;
@@ -144,6 +145,7 @@ function App() {
           apiKey={apiKey} 
           onSettingsClick={() => setShowApiKeyModal(true)}
           onHistoryClick={() => setDrawerOpen(true)}
+          onNewChatClick={handleNewChat}
           hasHistory={savedChats.length > 0}
         />
         <Container maxWidth="lg" sx={{ 
@@ -192,6 +194,21 @@ function App() {
           </IconButton>
         </Box>
         <Divider />
+        
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<AddIcon />}
+          onClick={() => {
+            handleNewChat();
+            setDrawerOpen(false);
+          }}
+          sx={{ mx: 2, my: 1 }}
+        >
+          新建对话
+        </Button>
+        
+        <Divider sx={{ my: 1 }} />
         
         {savedChats.length === 0 ? (
           <Box sx={{ p: 3, textAlign: 'center' }}>

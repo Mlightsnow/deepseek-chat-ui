@@ -1,15 +1,23 @@
 import { AppBar, Toolbar, Typography, Button, Box, IconButton, Tooltip } from '@mui/material';
 import SettingsIcon from '@mui/icons-material/Settings';
 import HistoryIcon from '@mui/icons-material/History';
+import AddIcon from '@mui/icons-material/Add';
 
 interface HeaderProps {
   apiKey: string;
   onSettingsClick: () => void;
   onHistoryClick?: () => void;
+  onNewChatClick?: () => void;
   hasHistory?: boolean;
 }
 
-const Header = ({ apiKey, onSettingsClick, onHistoryClick, hasHistory = false }: HeaderProps) => {
+const Header = ({ 
+  apiKey, 
+  onSettingsClick, 
+  onHistoryClick, 
+  onNewChatClick,
+  hasHistory = false 
+}: HeaderProps) => {
   return (
     <AppBar position="static" elevation={0} sx={{ backgroundColor: 'white' }}>
       <Toolbar>
@@ -27,6 +35,18 @@ const Header = ({ apiKey, onSettingsClick, onHistoryClick, hasHistory = false }:
             DeepSeek AI 聊天助手
           </Typography>
         </Box>
+
+        {onNewChatClick && (
+          <Tooltip title="新建对话">
+            <IconButton 
+              color="primary" 
+              onClick={onNewChatClick}
+              sx={{ mr: 1 }}
+            >
+              <AddIcon />
+            </IconButton>
+          </Tooltip>
+        )}
 
         {hasHistory && onHistoryClick && (
           <Tooltip title="聊天历史">

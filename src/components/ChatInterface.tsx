@@ -356,6 +356,35 @@ const ChatInterface = ({ apiKey, initialMessages, onNewChat }: ChatInterfaceProp
         }}
         ref={chatContainerRef}
       >
+        {messages.length <= 1 && (
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            height: '50%',
+            opacity: 0.7
+          }}>
+            <Typography variant="h5" sx={{ mb: 2, color: 'primary.main' }}>
+              DeepSeek AI 聊天助手
+            </Typography>
+            <Typography variant="body1" sx={{ textAlign: 'center', maxWidth: '600px' }}>
+              你可以向我询问任何问题，我会尽力提供帮助。
+              当前使用的System Prompt是：
+            </Typography>
+            <Typography variant="body2" sx={{ 
+              mt: 1, 
+              p: 2, 
+              backgroundColor: 'rgba(10, 88, 202, 0.1)', 
+              borderRadius: 1,
+              maxWidth: '90%',
+              wordBreak: 'break-word'
+            }}>
+              {systemPrompt}
+            </Typography>
+          </Box>
+        )}
+
         {messages.slice(1).map((message, index) => (
           <Box 
             key={index} 

@@ -13,6 +13,8 @@ A simple chat interface for interacting with the DeepSeek API.
 - Customizable system prompts
 - Save and manage conversation history
 - Export conversations as JSON files
+- Streaming output for real-time responses
+- Create new conversations with a single click
 
 ## Getting Started
 
@@ -40,12 +42,14 @@ A simple chat interface for interacting with the DeepSeek API.
 2. Type your question in the input field at the bottom and click "Send" or press Enter.
 3. The conversation will appear in the chat area above.
 4. You can clear the conversation anytime by clicking the trash icon in the bottom-left corner.
+5. To start a new conversation, click the "+" button in the top right or select "New Conversation" in the history sidebar.
 
 ### System Prompts
 
 1. Click the save icon and select "Set System Prompt".
 2. Enter your desired system prompt in the dialog box.
 3. The system prompt is a basic instruction to the AI that guides how it responds to your questions.
+4. Each saved conversation retains its own system prompt.
 
 ### Saving Conversations
 
