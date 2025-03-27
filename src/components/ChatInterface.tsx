@@ -110,32 +110,87 @@ const ChatInterface = ({ apiKey, initialMessages, onNewChat }: ChatInterfaceProp
     setError('');
     setIsLoading(true);
 
+    // 添加一个空的助手消息，用于流式填充
+    const assistantMessageId = Date.now().toString();
+    const assistantMessage: Message = { role: 'assistant', content: '' };
+    setMessages(prev => [...prev, assistantMessage]);
+
     try {
-      const response = await axios.post(
-        'https://api.deepseek.com/v1/chat/completions',
-        {
+      // 设置请求为流式响应
+      const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
           model: 'deepseek-chat',
           messages: [...messages, userMessage],
           temperature: 0.7,
           max_tokens: 4000,
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
+          stream: true  // 启用流式输出
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || `请求失败: ${response.status}`);
+      }
+
+      if (!response.body) {
+        throw new Error('响应体为空');
+      }
+
+      // 处理流式响应
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let fullContent = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n').filter(line => line.trim() !== '');
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6); // 移除 'data: ' 前缀
+            
+            if (data === '[DONE]') continue;
+            
+            try {
+              const parsedData = JSON.parse(data);
+              if (parsedData.choices && parsedData.choices[0].delta && parsedData.choices[0].delta.content) {
+                const contentChunk = parsedData.choices[0].delta.content;
+                fullContent += contentChunk;
+                
+                // 更新消息内容
+                setMessages(prev => {
+                  const newMessages = [...prev];
+                  // 找到并更新最后一条消息
+                  const lastMessage = newMessages[newMessages.length - 1];
+                  if (lastMessage.role === 'assistant') {
+                    lastMessage.content = fullContent;
+                  }
+                  return newMessages;
+                });
+              }
+            } catch (e) {
+              console.error('解析流数据失败:', e);
+            }
           }
         }
-      );
-
-      const assistantMessage = response.data.choices[0].message;
-      setMessages(prev => [...prev, assistantMessage]);
+      }
     } catch (err: any) {
       console.error('API请求错误:', err);
       setError(
-        err.response?.data?.error?.message || 
         err.message || 
         '与API通信时出错，请检查API密钥和网络连接'
       );
+      
+      // 如果出错，移除最后添加的空助手消息
+      setMessages(prev => prev.filter((_, index) => index !== prev.length - 1));
     } finally {
       setIsLoading(false);
     }
