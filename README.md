@@ -15,6 +15,7 @@ A simple chat interface for interacting with the DeepSeek API.
 - Export conversations as JSON files
 - Streaming output for real-time responses
 - Create new conversations with a single click
+- Mobile-friendly interface (responsive design)
 
 ## Getting Started
 
@@ -60,6 +61,8 @@ A simple chat interface for interacting with the DeepSeek API.
 
 ## Deployment
 
+### Local Deployment
+
 To build for production:
 
 ```
@@ -67,6 +70,28 @@ npm run build
 ```
 
 The build files will be located in the `dist` directory and can be deployed to any static site hosting service.
+
+### GitHub Pages Deployment
+
+This project supports automatic deployment to GitHub Pages:
+
+1. Fork or clone this repository
+2. Install dependencies with `npm install`
+3. Deploy to GitHub Pages with:
+   ```
+   npm run deploy
+   ```
+4. Your app will be available at `https://yourusername.github.io/deepseek-chat-ui/`
+
+### Mobile Access
+
+The app is designed with responsive UI and can be accessed on mobile devices:
+- Open the deployed URL in your mobile browser
+- For a more app-like experience, add to home screen from your browser menu
+
+## Live Demo
+
+You can try the live demo at: [https://mlightsnow.github.io/deepseek-chat-ui/](https://mlightsnow.github.io/deepseek-chat-ui/)
 
 ## License
 

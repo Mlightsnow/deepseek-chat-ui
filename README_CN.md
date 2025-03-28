@@ -15,6 +15,7 @@
 - 支持导出对话为JSON文件
 - 流式输出，实时显示AI回复
 - 一键创建新对话
+- 移动端友好界面（响应式设计）
 
 ## 开始使用
 
@@ -60,6 +61,8 @@
 
 ## 部署
 
+### 本地部署
+
 要构建生产版本，请运行：
 
 ```
@@ -67,6 +70,28 @@ npm run build
 ```
 
 构建文件将位于`dist`目录中，可以部署到任何静态网站托管服务。
+
+### GitHub Pages部署
+
+本项目支持自动部署到GitHub Pages：
+
+1. Fork或克隆此仓库
+2. 使用`npm install`安装依赖
+3. 使用以下命令部署到GitHub Pages：
+   ```
+   npm run deploy
+   ```
+4. 您的应用将可通过`https://您的用户名.github.io/deepseek-chat-ui/`访问
+
+### 移动端访问
+
+应用设计时考虑了响应式UI，可在移动设备上访问：
+- 在手机浏览器中打开部署的URL
+- 如需获得更接近应用的体验，可从浏览器菜单中添加到主屏幕
+
+## 在线演示
+
+您可以在这里体验在线演示：[https://mlightsnow.github.io/deepseek-chat-ui/](https://mlightsnow.github.io/deepseek-chat-ui/)
 
 ## 许可证
 
